@@ -1,0 +1,93 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appServiceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of UC's app service"
+      }
+    },
+    "SQLServer": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of UC's Sql Server"
+      }
+    },
+    "SQLDatabase": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of UC's Sql Databse"
+      }
+    },
+    "keyVaultURL": {
+      "type": "string",
+      "metadata": {
+        "description": "URL of the key vault"
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the key vault"
+      }
+    },
+    "license": {
+      "type": "string",
+      "defaultValue": "trial",
+      "metadata": {
+        "description": "License Key for UC"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group"
+      }
+    },
+    "StorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account Name"
+      }
+    },
+    "appRegistrationNameTeamsApp": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account Name"
+      }
+    },
+    "appRegistrationNameAdminPage": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage Account Name"
+      }
+    },
+    "sharepointUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Url of your SharePoint Tenant"
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2022-03-01",
+      "type": "Microsoft.Web/sites/config",
+      "name": "[concat(parameters('appServiceName'),'/appsettings')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "WEBSITE_RUN_FROM_PACKAGE": "https://unifiedcontacts.blob.core.windows.net/unified-contacts-releases/stable/1.4.0/ucPublish_1.4.0_824b8e82-0fd0-4b7e-b220-bdc90fdf4f69.zip",
+        "AppSettings__LicenseKey": "[parameters('license')]",
+        "AppSettings__SharepointUrl": "[parameters('sharepointUrl')]",
+        "KeyVaultName": "[parameters('keyVaultName')]",
+        "AppSettings__BlobStorageUrl": "[concat(parameters('StorageAccountName'),'.blob.core.windows.net')]",
+        "SQLServer": "[parameters('SQLServer')]",
+        "SQLDatabase": "[parameters('SQLDatabase')]",
+        "StorageAccountName": "[parameters('StorageAccountName')]",
+        "AppRegistrationNameTeamsApp": "[parameters('appRegistrationNameTeamsApp')]",
+        "AppRegistrationNameAdminPage": "[parameters('appRegistrationNameAdminPage')]"
+      }
+    }
+  ]
+}

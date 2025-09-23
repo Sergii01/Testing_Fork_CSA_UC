@@ -1,0 +1,125 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<SpaRoot>..\unifiedcontacts.client</SpaRoot>
+		<SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+		<SpaProxyServerUrl>https://localhost:5173</SpaProxyServerUrl>
+		<UserSecretsId>a31bbb1e-f6e4-4cd6-b508-e642e4917daf</UserSecretsId>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<NoWarn>1701;1702;1591</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<NoWarn>1701;1702;1591</NoWarn>
+		<Optimize>True</Optimize>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="DatabaseScripts\RunFirst\CreateUnifiedContactsCustomSchema.sql" />
+		<None Remove="DatabaseScripts\RunFirst\InitializeDatabase.sql" />
+		<None Remove="DatabaseScripts\Versions\1.3.0\CreateAdminSettingsTable.sql" />
+		<None Remove="DatabaseScripts\Versions\1.3.0\CreateCacheTable.sql" />
+		<None Remove="DatabaseScripts\Versions\1.3.0\CreateFavoritesTable.sql" />
+		<None Remove="DatabaseScripts\Versions\1.3.0\InitalizeReleaseChannelSettings.sql" />
+		<None Remove="DatabaseScripts\Versions\1.4.0\CreateUsageStatisticsTable.sql" />
+		<None Remove="DatabaseScripts\Versions\1.4.0\InitializeErrorTelemetrySetting.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.0\1-CreateContactsTable.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.0\2-AddSourceColumn.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.0\3-ReduceNvarcharMax.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.2\1-CreateTelemetryCacheTables.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.2\2-CreateUpdateTelemetryTenantCoreSP.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.2\3-CreateUpdateTelemetryTenantHistorySP.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.2\4-UpdateContactsDBTable.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.2\5-ExtendNvarcharContactsDBTable.sql" />
+		<None Remove="DatabaseScripts\Versions\1.5.2\6-FixUpdateTelemetryTenantHistorySP.sql" />
+		<None Remove="DatabaseScripts\Versions\5.3.0\1-InitializeEnabledSourcesSettings.sql" />
+		<None Remove="DatabaseScripts\Versions\5.3.0\2-InitializeSBCLookupSettings.sql" />
+		<None Remove="DatabaseScripts\Versions\5.6.0\01-RemoveHangfireTables" />
+		<None Remove="DatabaseScripts\Versions\5.6.0\02-UpdateTeamsAppDescription.sql" />
+		<None Remove="DatabaseScripts\Versions\5.7.0\01-AddAnynodeAdminPortalEnableSwitch.sql" />
+		<None Remove="DatabaseScripts\Versions\5.7.0\02-AddEntraIDDefaultFilter.sql" />
+		<None Remove="Templates\Manifest\icon-color.png" />
+		<None Remove="Templates\Manifest\icon-outline.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="Templates\Manifest\icon-color.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Templates\Manifest\icon-outline.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="DatabaseScripts\RunFirst\CreateUnifiedContactsCustomSchema.sql" />
+		<EmbeddedResource Include="DatabaseScripts\RunFirst\InitializeDatabase.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.3.0\CreateAdminSettingsTable.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.3.0\CreateCacheTable.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.3.0\CreateFavoritesTable.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.3.0\InitalizeReleaseChannelSettings.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.4.0\CreateUsageStatisticsTable.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.4.0\InitializeErrorTelemetrySetting.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.0\1-CreateContactsTable.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.0\2-AddSourceColumn.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.0\3-ReduceNvarcharMax.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.2\1-CreateTelemetryCacheTables.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.2\2-CreateUpdateTelemetryTenantCoreSP.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.2\3-CreateUpdateTelemetryTenantHistorySP.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.2\4-UpdateContactsDBTable.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.2\5-ExtendNvarcharContactsDBTable.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\1.5.2\6-FixUpdateTelemetryTenantHistorySP.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\5.3.0\1-InitializeEnabledSourcesSettings.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\5.3.0\2-InitializeSBCLookupSettings.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\5.6.0\01-RemoveHangfireTables.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\5.6.0\02-UpdateTeamsAppDescription.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\5.7.0\02-AddEntraIDDefaultFilter.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\5.7.0\01-AddAnynodeAdminPortalEnableSwitch.sql" />
+		<EmbeddedResource Include="DatabaseScripts\Versions\6.0.0\01-RemoveTelemetryTenantCoreTable.sql" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
+		<PackageReference Include="Azure.Identity" Version="1.15.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.25.0" />
+		<PackageReference Include="Dapper" Version="2.1.66" />
+		<PackageReference Include="Dapper.Contrib" Version="2.0.78" />
+		<PackageReference Include="dbup" Version="5.0.41" />
+		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.19" />
+		<PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="8.0.10" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Graph" Version="5.91.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.4" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.4" />
+		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\unifiedcontacts.client\unifiedcontacts.client.esproj">
+			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+		</ProjectReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Update="Templates\Manifest\manifest.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Invocables\" />
+	</ItemGroup>
+
+
+
+</Project>

@@ -1,0 +1,289 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "licenseKey": {
+      "type": "string",
+      "defaultValue": "trial",
+      "metadata": {
+        "description": "License Key for Unified Contacts"
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Specifies the name of the Azure Key Vault. The name of a Key Vault must be globally unique and contain only DNS-compatible characters (letters, numbers, and hyphens)."
+      },
+      "defaultValue": "[concat('kv-uc-', uniqueString(resourceGroup().id))]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Choose a globally unique name for your storage account. Storage account names must be between 3 and 24 characters in length and may contain numbers and lowercase letters only."
+      },
+      "defaultValue": "[concat('strguc', uniqueString(resourceGroup().id))]"
+    },
+    "serverName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Choose a globally unique name for your SQL server. SQL server names must be between 3 and 24 characters in length and may contain numbers and lowercase letters only."
+      },
+      "defaultValue": "[concat('db-uc-', uniqueString(resourceGroup().id))]"
+    },
+    "sqlDBName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Choose a name for your SQL databse. SQL database names must be between 3 and 24 characters in length and may contain numbers and lowercase letters only."
+      },
+      "defaultValue": "sql-db"
+    },
+    "administratorLogin": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Choose a name for your SQL administrator login. Aministrator logins must be between 3 and 24 characters in length and may contain numbers and lowercase letters only."
+      },
+      "defaultValue": "sqladmin"
+    },
+    
+    "administratorLoginPassword": {
+      "type": "secureString",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Choose a password for your SQL administrator login."
+      }
+    },
+    "sharepointUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The Url of your SharepointTenant. Example: contoso.sharepoint.com"
+      },
+      "defaultValue": ""
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "maxLength": 40,
+      "defaultValue": "[concat('asp-uc-', uniqueString(resourceGroup().id))]"
+    },
+    "appServiceName": {
+      "type": "string",
+      "maxLength": 60,
+      "metadata": {
+        "description": "The Unified Contacts App Service and part of the default FQDN. Therefore, it must be globally unique and contain only DNS-compatible characters."
+      },
+      "defaultValue": "[concat('app-uc-', uniqueString(resourceGroup().id))]"
+    },
+    "appRegistrationNameAdminPage": {
+      "type": "string",
+      "maxLength": 60,
+      "metadata": {
+        "description": "Name of the App registration for the Unified Contacts Admin Page"
+      },
+      "defaultValue": "[concat('admin-app-reg-uc-', uniqueString(resourceGroup().id))]"
+    },
+     "appRegistrationNameTeamsApp": {
+      "type": "string",
+      "maxLength": 60,
+      "metadata": {
+        "description": "Name of the App registration for the Authentication in Teams"
+      },
+      "defaultValue": "[concat('teams-app-reg-uc-', uniqueString(resourceGroup().id))]"
+    },
+    "resourceTags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Tags to be assigned to all created resources. Use JSON syntax, e.g. if you want to add tags env with value dev and project with value unifiedcontacts, then write { \"env\":\"dev\", \"project\":\"unifiedcontacts\"}."
+      }
+    }
+  },
+  "variables": {
+    "templateRepositoryUrl": "https://unifiedcontacts.blob.core.windows.net/arm-templates/",
+    "appSvcTemplateUri": "[uri(variables('templateRepositoryUrl'), 'webapp.json')]",
+    "vaultTemplateUri": "[uri(variables('templateRepositoryUrl'), 'keyvault.json')]",
+    "stgAccountTemplateUri": "[uri(variables('templateRepositoryUrl'), 'storage.json')]",
+    "sqlDatabaseTemplateUri": "[uri(variables('templateRepositoryUrl'), 'sql.json')]",
+    "appConfigTemplateUri" : "[uri(variables('templateRepositoryUrl'), 'appconfig.json')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "pid-a262352f-52a9-4ed9-a9ba-6a2b2478d19b-partnercenter",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "UnifiedContactsAppServices",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('appSvcTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "appServicePlanName": {
+            "value": "[parameters('appServicePlanName')]"
+          },
+          "appServiceName": {
+            "value": "[parameters('appServiceName')]"
+          },
+          "location": {
+            "value": "[resourceGroup().location]"
+          },
+          "resourceTags": {
+              "value": "[parameters('resourceTags')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "UnifiedContactsVault",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vaultTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "permittedPrincipalId": {
+            "value": "[reference('UnifiedContactsAppServices').outputs.ucPrincipalID.value]"
+          },
+          "location": {
+            "value": "[resourceGroup().location]"
+          },
+          "resourceTags": {
+            "value": "[parameters('resourceTags')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "UnifiedContactsDatabase",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sqlDatabaseTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "serverName": {
+            "value": "[parameters('serverName')]"
+          },
+          "sqlDBName": {
+            "value": "[parameters('sqlDBName')]"
+          },
+          "location": {
+            "value": "[resourceGroup().location]"
+          },
+          "administratorLogin": {
+            "value": "[parameters('administratorLogin')]"
+          },
+          "administratorLoginPassword": {
+              "value": "[parameters('administratorLoginPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "DeploymentUCConfig",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('appConfigTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "appServiceName": {
+            "value": "[parameters('appServiceName')]"
+          },
+          "keyVaultURL": {
+            "value": "[reference('UnifiedContactsVault').outputs.keyVaultURL.value]"
+          },
+          "keyVaultName": {
+              "value": "[parameters('keyVaultName')]"
+            },
+          "license": {
+            "value": "[parameters('licenseKey')]"
+          },
+          "location": {
+            "value": "[resourceGroup().location]"
+          },
+          "SQLServer": {
+            "value": "[parameters('serverName')]"
+          },
+          "SQLDatabase": {
+            "value": "[parameters('sqlDBName')]"
+          },
+          "StorageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "appRegistrationNameTeamsApp": {
+            "value": "[parameters('appRegistrationNameTeamsApp')]"
+          },
+          "appRegistrationNameAdminPage": {
+            "value": "[parameters('appRegistrationNameAdminPage')]"
+          },
+          "sharepointUrl": {
+            "value": "[parameters('sharepointUrl')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "UnifiedContactsStorageAccount",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('stgAccountTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "StorageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "location": {
+            "value": "[resourceGroup().location]"
+          },
+          "resourceTags": {
+            "value": "[parameters('resourceTags')]"
+          },
+          "storageContributorPrincipals": {
+            "value": [
+              "[reference('UnifiedContactsAppServices').outputs.ucPrincipalID.value]"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

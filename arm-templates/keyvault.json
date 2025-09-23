@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "keyVaultName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 24,
+      "metadata": {
+        "description": "Specifies the name of the key vault."
+      }
+    },
+    "permittedPrincipalId": {
+      "type": "string",
+      "metadata": {
+        "description": "IDs of UCs app service principal, whom will be assigned permissions to the KV"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group"
+      }
+    },
+    "resourceTags": {
+      "type": "object",
+      "metadata": {
+        "description": "Tags to be assigned to the created resources"
+      }
+    }
+  },
+  "variables": {
+    "keys": [],
+    "secrets": ["Get", "List"],
+    "certificates": []
+  },
+  "resources": [
+    {
+      "apiVersion": "2021-10-01",
+      "type": "Microsoft.KeyVault/vaults",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('resourceTags')]",
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "enabledForDeployment": false,
+        "enabledForTemplateDeployment": false,
+				"softDeleteEnabled": false,
+        "enabledForDiskEncryption": false,
+        "sku": {
+          "name": "premium",
+          "family": "A"
+        },
+        "accessPolicies": [
+          {
+            "objectId": "[parameters('permittedPrincipalId')]",
+            "tenantId": "[subscription().tenantId]",
+            "permissions": {
+              "keys": "[variables('keys')]",
+              "secrets": "[variables('secrets')]",
+              "certificates": "[variables('certificates')]"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "keyVaultURL": {
+      "type": "string",
+      "value": "[reference(parameters('keyVaultName')).vaultUri]"
+    }
+  }
+}

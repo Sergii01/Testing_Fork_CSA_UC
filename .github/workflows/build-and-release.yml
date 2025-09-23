@@ -1,0 +1,224 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      prerelease:
+        description: 'Mark as prerelease'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '18.x'
+  CONFIGURATION: Release
+  WORKING_DIRECTORY: UnifiedContacts/UnifiedContacts.Server
+  CI: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Get version
+      id: get-version
+      run: |
+        if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          $version = "${{ github.ref_name }}"
+        }
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        Write-Host "Version: $version"
+      shell: pwsh
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: UnifiedContacts/unifiedcontacts.client/package-lock.json
+
+    - name: Create lib directory for NuGet local source
+      run: |
+        New-Item -ItemType Directory -Force -Path "${{ env.WORKING_DIRECTORY }}/lib"
+        Write-Host "Created lib directory for NuGet local source"
+      shell: pwsh
+        
+    - name: Restore .NET dependencies
+      run: |
+        # Create a custom NuGet.Config that only uses nuget.org
+        $nugetConfig = @"
+        <?xml version="1.0" encoding="utf-8"?>
+        <configuration>
+          <packageSources>
+            <clear />
+            <add key="nuget.org" value="https://api.nuget.org/v3/index.json" protocolVersion="3" />
+          </packageSources>
+        </configuration>
+        "@
+        
+        # Save to a temp file
+        $nugetConfig | Out-File -FilePath "./nuget.config" -Encoding UTF8
+        
+        # Use the custom config for restore
+        dotnet restore "${{ env.WORKING_DIRECTORY }}" --configfile "./nuget.config"
+      shell: pwsh
+
+    - name: Install Node.js dependencies
+      run: |
+        cd UnifiedContacts/unifiedcontacts.client
+        npm ci
+
+    - name: Build React client
+      run: |
+        cd UnifiedContacts/unifiedcontacts.client
+        npm run build
+
+    - name: Build .NET application
+      run: dotnet build "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-restore
+
+    - name: Test .NET application
+      run: |
+        dotnet test "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal
+
+    - name: Publish .NET application
+      run: dotnet publish "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-build --output ./publish
+
+    - name: Create PowerShell module structure
+      run: |
+        # Create module directory structure
+        New-Item -ItemType Directory -Force -Path "./publish-module/UnifiedContactsPS"
+        
+        # Copy PowerShell module files
+        Copy-Item -Path "UnifiedContactsPS/*" -Destination "./publish-module/UnifiedContactsPS/" -Recurse -Force
+        
+        # Copy ARM templates
+        New-Item -ItemType Directory -Force -Path "./publish-module/arm-templates"
+        Copy-Item -Path "arm-templates/*" -Destination "./publish-module/arm-templates/" -Recurse -Force
+      shell: pwsh
+
+    - name: Create binaries package
+      run: |
+        # Create binaries directory
+        New-Item -ItemType Directory -Force -Path "./binaries"
+        
+        # Copy published application
+        Copy-Item -Path "./publish/*" -Destination "./binaries/" -Recurse -Force
+        
+        # Create version info file
+        $versionInfo = @{
+          version = "${{ steps.get-version.outputs.version }}"
+          buildDate = (Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC")
+          commit = "${{ github.sha }}"
+        }
+        $versionInfo | ConvertTo-Json | Out-File -FilePath "./binaries/version.json" -Encoding UTF8
+        
+        # Create zip file
+        Compress-Archive -Path "./binaries/*" -DestinationPath "./binaries.zip" -Force
+      shell: pwsh
+
+    - name: Create PowerShell module package
+      run: |
+        Compress-Archive -Path "./publish-module/*" -DestinationPath "./UnifiedContactsPS.zip" -Force
+      shell: pwsh
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Try to get previous tag, if it fails, set a default message
+        $prevTag = $null
+        try {
+          # Get all tags, sort them, and get the second most recent (excluding current)
+          $allTags = git tag --sort=-version:refname 2>$null
+          if ($allTags -and $allTags.Count -gt 1) {
+            $currentTag = "${{ steps.get-version.outputs.version }}"
+            $prevTag = ($allTags | Where-Object { $_ -ne $currentTag } | Select-Object -First 1)
+          }
+        }
+        catch {
+          # If git command fails, $prevTag remains $null
+        }
+        
+        if ($prevTag) {
+          $compareLink = "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$prevTag...${{ steps.get-version.outputs.version }}"
+        }
+        else {
+          $compareLink = "**Initial Release**: https://github.com/${{ github.repository }}/releases/tag/${{ steps.get-version.outputs.version }}"
+        }
+        
+        # Get current date for build info
+        $buildDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss UTC"
+        
+        # Create a properly formatted changelog
+        $changelog = "## 🚀 What's Changed`n`n"
+        $changelog += "### ✨ Features`n"
+        $changelog += "- 📦 Updated application binaries`n"
+        $changelog += "- 🔧 PowerShell deployment module included`n"
+        $changelog += "- ☁️ ARM templates for Azure deployment`n`n"
+        $changelog += "### 🔧 Technical Details`n"
+        $changelog += "- 🏗️ Built with .NET ${{ env.DOTNET_VERSION }}`n"
+        $changelog += "- ⚛️ React frontend included`n"
+        $changelog += "- 📋 Self-contained deployment package`n`n"
+        $changelog += "### 📋 Release Information`n"
+        $changelog += "- 🏷️ **Version**: ${{ steps.get-version.outputs.version }}`n"
+        $changelog += "- 📅 **Build Date**: $buildDate`n"
+        $changelog += "- 🔗 $compareLink`n`n"
+        $changelog += "---`n"
+        $changelog += "*This release was automatically generated by GitHub Actions* 🤖"
+        
+        # Save to output without URL encoding
+        $changelogFile = "changelog.txt"
+        $changelog | Out-File -FilePath $changelogFile -Encoding UTF8
+        echo "changelogfile=$changelogFile" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+
+    - name: Create Release
+      id: create-release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.get-version.outputs.version }}
+        name: UnifiedContacts ${{ steps.get-version.outputs.version }}
+        body_path: ${{ steps.changelog.outputs.changelogfile }}
+        draft: false
+        prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+        files: |
+          ./binaries.zip
+          ./UnifiedContactsPS.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: unified-contacts-${{ steps.get-version.outputs.version }}
+        path: |
+          ./binaries.zip
+          ./UnifiedContactsPS.zip
+          ./publish/
+        retention-days: 30
+
+

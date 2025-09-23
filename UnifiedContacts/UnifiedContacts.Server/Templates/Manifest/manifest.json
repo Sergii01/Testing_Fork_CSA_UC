@@ -1,0 +1,61 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "{{{version}}}",
+  "id": "{{{proTeamsAppId}}}",
+  "developer": {
+    "name": "glueckkanja AG",
+    "websiteUrl": "https://www.glueckkanja.com/en/products/unified-contacts",
+    "privacyUrl": "https://docs.unified-contacts.com/legal/privacy",
+    "termsOfUseUrl": "https://docs.unified-contacts.com/legal/terms-of-use",
+    "mpnId": "1154047"
+  },
+  "name": {
+    "short": "{{{displayName}}}",
+    "full": "{{{displayName}}}"
+  },
+  "description": {
+    "short": "{{{shortDescription}}}",
+    "full": "{{{longDescription}}}"
+  },
+  "icons": {
+    "outline": "icon-outline.png",
+    "color": "icon-color.png"
+  },
+  "accentColor": "#008187",
+  "configurableTabs": [],
+  "staticTabs": [
+    {
+      "entityId": "index",
+      "scopes": [
+        "personal"
+      ],
+      "name": "Search",
+      "contentUrl": "https://{{{domain}}}/v1.3.0/search"
+    },
+    {
+      "entityId": "favorites",
+      "scopes": [
+        "personal"
+      ],
+      "name": "Favorites",
+      "contentUrl": "https://{{{domain}}}/v1.3.0/favorites"
+    }
+  ],
+  "bots": [],
+  "connectors": [],
+  "composeExtensions": [],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "devicePermissions": [],
+  "showLoadingIndicator": true,
+  "defaultBlockUntilAdminAction": false,
+  "publisherDocsUrl": "https://docs.unified-contacts.com/",
+  "configurableProperties": [],
+  "webApplicationInfo": {
+    "id": "{{{clientId}}}",
+    "resource": "api://{{{domain}}}/{{{clientId}}}"
+  }
+}

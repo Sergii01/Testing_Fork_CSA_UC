@@ -1,0 +1,97 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingAppServicePlanID": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the AppServicePlan ID of an existing App Service Plan. Keep default value 'none' if you want to create a new one."
+      },
+      "defaultValue": "none"
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the App Service Plan to be created"
+      }
+    },
+    "appServiceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of App Service to be created"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group"
+      }
+    },
+    "resourceTags": {
+      "type": "object",
+      "metadata": {
+        "description": "Tags to be assigned to the created resources"
+      }
+    }
+  },
+
+  "resources": [
+    {
+      "condition": "[equals(parameters('existingAppServicePlanID'), 'none')]",
+      "apiVersion": "2021-02-01",
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[parameters('AppServicePlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "Tier": "Basic",
+        "Name": "B1"
+      },
+			"kind": "linux",
+      "tags": "[parameters('resourceTags')]",
+      "properties": {
+        "name": "[parameters('AppServicePlanName')]",
+        "workerSize": 1,
+        "numberOfWorkers": 1,
+				"reserved": true
+      }
+    },
+    {
+      "apiVersion": "2022-03-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('appServiceName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "tags": "[parameters('resourceTags')]",
+      "properties": {
+        "serverFarmId": "[if(equals(parameters('existingAppServicePlanID'), 'none'), resourceId('Microsoft.Web/serverfarms', parameters('AppServicePlanName')), parameters('existingAppServicePlanID'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "alwaysOn": "true",
+          "ftpsState": "FtpsOnly",
+          "use32BitWorkerProcess": false,
+					"linuxFxVersion": "DOTNETCORE|6.0"
+        },
+        "clientAffinityEnabled": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "appServiceUrl": {
+      "type": "string",
+      "value": "[uri(concat('https://', reference(parameters('appServiceName')).defaultHostName), '/')]"
+    },
+    "ucPrincipalID": {
+      "type": "string",
+      "value": "[reference(parameters('appServiceName'), '2021-02-01', 'Full').identity.principalId]"
+    },
+    "appServicePlanID": {
+      "type": "string",
+      "value": "[if(equals(parameters('existingAppServicePlanID'), 'none'), resourceId('Microsoft.Web/serverfarms', parameters('AppServicePlanName')), parameters('existingAppServicePlanID'))]"
+    }
+  }
+}
